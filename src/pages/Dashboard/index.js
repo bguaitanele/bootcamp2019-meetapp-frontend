@@ -3,28 +3,35 @@ import { Link } from 'react-router-dom';
 import { Container, MeetupList } from './styles';
 import { MdAddCircleOutline, MdChevronRight } from 'react-icons/md';
 import api from '~/services/api';
+import Paginacao from '~/components/Paginacao';
 import { parseISO, format } from 'date-fns';
 import { utcToZonedTime } from 'date-fns-tz';
 import ptBr from 'date-fns/locale/pt-BR';
 
 export default function Dashboard() {
   const [meetups, setMeetups] = useState([]);
-  useEffect(() => {
-    async function getMeetups() {
-      const response = await api.get('meetups');
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const data = response.data.map(meetup => {
-        meetup.dataFormatada = format(
-          utcToZonedTime(parseISO(meetup.date), timezone),
-          "dd 'de' MMMM 'às' HH'h'mm",
-          { locale: ptBr }
-        );
-        return meetup;
-      });
+  const [total, setTotal] = useState(0);
+  const [pagina, setPagina] = useState(1);
 
-      setMeetups(data);
-    }
-    getMeetups();
+  async function getMeetups(page = 1) {
+    setPagina(page);
+    const response = await api.get('meetups', { params: { page } });
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setTotal(response.headers['x-total-count']);
+    const data = response.data.map(meetup => {
+      meetup.dataFormatada = format(
+        utcToZonedTime(parseISO(meetup.date), timezone),
+        "dd 'de' MMMM 'às' HH'h'mm",
+        { locale: ptBr }
+      );
+      return meetup;
+    });
+
+    setMeetups(data);
+  }
+
+  useEffect(() => {
+    getMeetups(1);
   }, []);
 
   return (
@@ -49,6 +56,11 @@ export default function Dashboard() {
           </li>
         ))}
       </MeetupList>
+      <Paginacao
+        totalRegistros={total}
+        pagina={pagina}
+        handleMudarPagina={getMeetups}
+      />
     </Container>
   );
 }

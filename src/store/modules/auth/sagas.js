@@ -10,6 +10,12 @@ export function* signIn({ payload }) {
     const response = yield call(api.post, 'login', payload);
     const { token, user } = response.data;
 
+    if (!user.organizer) {
+      toast.error('O usuário deve ser um organizador');
+      yield put(signFailure());
+      return;
+    }
+
     api.defaults.headers.Authorization = `Bearer ${token}`;
 
     yield put(signInSuccess(token, user));
