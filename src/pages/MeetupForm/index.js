@@ -24,7 +24,9 @@ export default function MeetupForm({
         setMeetup(response.data);
       }
     }
-    getMeetup();
+    if (meetupId) {
+      getMeetup();
+    }
   }, [meetupId]);
 
   async function handleSubmit(form) {
